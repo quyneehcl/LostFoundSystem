@@ -14,10 +14,8 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
+.idea/
+src/main/resources/firebase-service-account.json
 
 ### NetBeans ###
 /nbproject/private/
