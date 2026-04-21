@@ -24,6 +24,7 @@ public abstract class Item {
         this.contactInfo = contactInfo;
         this.imageUrl = imageUrl;
         this.reportedBy = reportedBy;
+        this.status = "active";
     }
     public String getId() {
         return id;
