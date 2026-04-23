@@ -28,25 +28,24 @@ public class MatchResult implements Comparable<MatchResult> {
 
     @Override
     public int compareTo(MatchResult other) {
-        return (int) (other.getScore() - this.getScore());
+        return Double.compare(other.score, this.score);
     }
 
     @Override
     public String toString() {
-        return "Match: " + itemName + "<->" + matchedItemName + " (Score: " + score + "%";
+        return "Match: " + itemName + " <-> " + matchedItemName + " (Score: " + score + "%)";
     }    
 
     public java.util.Map<String, Object> toMap() {
-        Map<String, Object> itemMap = new HashMap<>();
-        itemMap.put("Matched Item ID", this.score);
-        itemMap.put("Matched Item Name", this.matchedItemName);
-        itemMap.put("Matched Item Type", this.matchedItemType);
-        itemMap.put("Matched Item Category", this.matchedItemCategory);
-        itemMap.put("Matched Item Location", this.matchedItemLocation);
-        itemMap.put("Matched Item Contact Information", this.matchedItemContactInfo);
-        itemMap.put("Score", Math.round(this.score * 100)/100);
-
-        return itemMap;
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("matchedItemId", matchedItemId);
+        map.put("matchedItemName", matchedItemName);
+        map.put("matchedItemType", matchedItemType);
+        map.put("matchedItemCategory", matchedItemCategory);
+        map.put("matchedItemLocation", matchedItemLocation);
+        map.put("matchedItemContactInfo", matchedItemContactInfo);
+        map.put("score", Math.round(score * 100.0) / 100.0);
+        return map;
     }
 
     public String getItemId() {
