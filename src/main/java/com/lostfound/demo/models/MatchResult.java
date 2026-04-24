@@ -1,7 +1,12 @@
 package com.lostfound.demo.models;
 
 import java.util.HashMap;
-import java.util.Map;
+
+/**
+ * MatchResult - Represents the outcome of comparing a FoundItem with LostItems.
+ * Stores key information along with a matching score (0-100).
+ * @author Phan Minh Duc
+ */
 
 public class MatchResult implements Comparable<MatchResult> {
     private String itemId;
@@ -14,17 +19,22 @@ public class MatchResult implements Comparable<MatchResult> {
     private String matchedItemContactInfo;
     private double score; // 0-100
 
-    public MatchResult(String itemId, String itemName, String matchedItemCategory, String matchedItemContactInfo, String matchedItemId, String matchedItemLocation, String matchedItemName, String matchedItemType, double score) {
+    public MatchResult(String itemId, String matchedItemId, String itemName,
+                       String matchedItemName, String matchedItemType,
+                       String matchedItemCategory, String matchedItemLocation,
+                       String matchedItemContactInfo, double score) {
         this.itemId = itemId;
-        this.itemName = itemName;
-        this.matchedItemCategory = matchedItemCategory;
-        this.matchedItemContactInfo = matchedItemContactInfo;
         this.matchedItemId = matchedItemId;
-        this.matchedItemLocation = matchedItemLocation;
+        this.itemName = itemName;
         this.matchedItemName = matchedItemName;
         this.matchedItemType = matchedItemType;
+        this.matchedItemCategory = matchedItemCategory;
+        this.matchedItemLocation = matchedItemLocation;
+        this.matchedItemContactInfo = matchedItemContactInfo;
         this.score = score;
     }
+
+    // Compare MatchResult objects by score in descending order.
 
     @Override
     public int compareTo(MatchResult other) {
@@ -36,6 +46,7 @@ public class MatchResult implements Comparable<MatchResult> {
         return "Match: " + itemName + " <-> " + matchedItemName + " (Score: " + score + "%)";
     }    
 
+    // Convert this MatchResult to a Map suitable for JSON/API responses.
     public java.util.Map<String, Object> toMap() {
         HashMap<String, Object> map = new HashMap<>();
         map.put("matchedItemId", matchedItemId);
@@ -48,6 +59,7 @@ public class MatchResult implements Comparable<MatchResult> {
         return map;
     }
 
+    // Getters
     public String getItemId() {
         return itemId;
     }
