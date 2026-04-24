@@ -2,6 +2,11 @@ package com.lostfound.demo.models;
 import java.time.LocalDate;
 import java.util.HashMap;
 
+/**
+ * Item = Abstract base class for all reportable objects in the Lost & Found system.
+ * @author Nguyen The Minh Duc
+ */
+
 public abstract class Item {
     private String id;
     private String name;
@@ -26,6 +31,8 @@ public abstract class Item {
         this.reportedBy = reportedBy;
         this.status = "active";
     }
+
+    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -105,6 +112,8 @@ public abstract class Item {
     public void setReportedBy(String reportedBy) {
         this.reportedBy = reportedBy;
     }
+
+    // Abstract Methods
     public abstract String getItemType();
 
     public abstract String getSummary();
