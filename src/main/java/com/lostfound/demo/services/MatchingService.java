@@ -1,21 +1,79 @@
 package com.lostfound.demo.services;
 
 import com.lostfound.demo.models.FoundItem;
+import com.lostfound.demo.models.MatchResult;
 import com.lostfound.demo.models.Item;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.regex.MatchResult;
+
 
 public class MatchingService {
     public List<MatchResult> findMatches(FoundItem foundItem, List<Item> allItems){
         PriorityQueue<MatchResult> pq = new PriorityQueue<>();
 
         for(Item item : allItems){
+            if (item.getId().equals(foundItem.getId())) continue;
+
             if(item.getItemType().equalsIgnoreCase("lost") && item.getStatus().equalsIgnoreCase("active")){
-                double score = 0.0;
+                double score = calculateScore(foundItem, item);
+
+                if(score > 0){
+                    pd.add(new MatchResult(
+                        lostItem.getId(), // itemId (source)
+                        item.getId(), // matchedItemId
+                        lostItem.getName(), // itemName
+                        item.getName(), // matchedItemName
+                        item.getItemType(), // matchedItemType
+                        item.getCategory(),  // matchedItemCategory
+                        item.getLocation(), // matchedItemLocation
+                        item.getContactInfo(), // matchedItemContactInfo
+                        score
+                    ))
+                }
                 
-                if (item.getCategory() != null && foundItem.getCategory() != null &&
+        }
+         List<MatchResult> results = new ArrayList<>();
+        while (!pq.isEmpty()) {
+            results.add(pq.poll());
+        }
+
+        return results;
+    }
+
+    public List<MatchResult> findMatchesForLost(FoundItem foundItem, List<Item> allItems){
+        PriorityQueue<MatchResult> pq = new PriorityQueue<>();
+
+        for(Item item : allItems){
+            if (item.getId().equals(foundItem.getId())) continue;
+
+            if(item.getItemType().equalsIgnoreCase("lost") && item.getStatus().equalsIgnoreCase("active")){
+                double score = calculateScore(foundItem, item);
+
+                if(score > 0){
+                    pd.add(new MatchResult(
+                        lostItem.getId(), // itemId (source)
+                        item.getId(), // matchedItemId
+                        lostItem.getName(), // itemName
+                        item.getName(), // matchedItemName
+                        item.getItemType(), // matchedItemType
+                        item.getCategory(),  // matchedItemCategory
+                        item.getLocation(), // matchedItemLocation
+                        item.getContactInfo(), // matchedItemContactInfo
+                        score
+                    ))
+                }
+                
+        }
+        List<MatchResult> results = new ArrayList<>();
+        while (!pq.isEmpty()) {
+            results.add(pq.poll());
+        }
+
+        return results;
+    
+    public double calculateScore(FoundItem foundItem, Item item){
+           if (item.getCategory() != null && foundItem.getCategory() != null &&
                     item.getCategory().equalsIgnoreCase(foundItem.getCategory())) {
                             score += 40;
                 }
@@ -25,17 +83,7 @@ public class MatchingService {
 
                 score += stringSimilarity(foundItem.getDescription(), item.getDescription()) * 10;
 
-                if (score > 0) {
-                    pq.add(new MatchResult(item, score));
-                 }
             }
-        }
-         List<MatchResult> results = new ArrayList<>();
-        while (!pq.isEmpty()) {
-            results.add(pq.poll());
-        }
-
-        return results;
     }
 
     public double stringSimilarity(String s1, String s2) {
