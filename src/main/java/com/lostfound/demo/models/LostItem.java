@@ -15,12 +15,15 @@ public class LostItem extends Item {
         this.setReportedBy(reportedBy);
     }
     // Implementation of abstract methods getItemType, getSummary
+    @Override
     public String getItemType() {
         return "lost";
     }
+    @Override
     public String getSummary() {
         return String.format("[LOST] %s | Category: %s | Location: %s | Date: %s", getName(), getCategory(), getLocation(), getDate());
     }
+    @Override
     public HashMap<String, Object> toMap() {
         // Convert LostItem to a Map 
         HashMap<String, Object> map = new HashMap<>();

@@ -15,12 +15,15 @@ public class FoundItem extends Item {
         this.setReportedBy(reportedBy);
     }
     // Implementation of abstract methods getItemType, getSummary
+    @Override
     public String getItemType() {
         return "found";
     }
+    @Override
     public String getSummary() {
         return String.format("[FOUND] %s | Category: %s | Location: %s | Date: %s", getName(), getCategory(), getLocation(), getDate());
     }
+    @Override
     public HashMap<String, Object> toMap() {
         // Convert FoundItem to a Map 
         HashMap<String, Object> map = new HashMap<>();
