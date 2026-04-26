@@ -10,11 +10,9 @@ import java.util.HashMap;
 public class FoundItem extends Item {
     public FoundItem(String id, String name, String category, String description, String location, LocalDate date, String contactInfo, String imageUrl, String reportedBy) {
         // Initialization
-        super(id, name, category, description, location, date, contactInfo);
-        this.setImageUrl(imageUrl);
-        this.setReportedBy(reportedBy);
+        super(id, name, category, description, location, date, contactInfo, imageUrl, reportedBy);
     }
-    // Implementation of abstract methods getItemType, getSummary
+    
     @Override
     public String getItemType() {
         return "found";
@@ -32,7 +30,7 @@ public class FoundItem extends Item {
         map.put("category", getCategory());
         map.put("description", getDescription());
         map.put("location", getLocation());
-        map.put("date", getDate().toString());
+        map.put("date", getDate() != null ? getDate().toString() : null);
         map.put("contactInfo", getContactInfo());
         map.put("imageUrl", getImageUrl());
         map.put("reportedBy", getReportedBy());

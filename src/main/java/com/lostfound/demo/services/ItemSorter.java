@@ -24,13 +24,17 @@ public class ItemSorter {
         List<Item> temp = new ArrayList<>();
         int i = left;
         int j = mid + 1;
+
         while (i <= mid && j <= right) {
-            if (list.get(i).getDate().isAfter(list.get(j).getDate())
-                    || list.get(i).getDate().isEqual(list.get(j).getDate())) {
-                temp.add(list.get(i));
+            Item leftItem = list.get(i);
+            Item rightItem = list.get(j);
+
+            if (leftItem.getDate().isAfter(rightItem.getDate())
+                    || leftItem.getDate().isEqual(rightItem.getDate())) {
+                temp.add(leftItem);
                 i++;
             } else {
-                temp.add(list.get(j));
+                temp.add(rightItem);
                 j++;
             }
         }
