@@ -16,6 +16,7 @@ target/
 ### IntelliJ IDEA ###
 .idea/
 src/main/resources/firebase-service-account.json
+src/main/resources/serviceAccountKey.json
 
 ### NetBeans ###
 /nbproject/private/
