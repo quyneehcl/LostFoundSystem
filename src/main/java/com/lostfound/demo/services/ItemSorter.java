@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ItemSorter - Sort items by date.
+ * Sort items by date.
  * @author Ngu Hoang Nguyen
  */
 

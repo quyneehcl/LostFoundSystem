@@ -84,10 +84,10 @@ public class ItemSearcher {
         return null;
     }
  
-    // Private helper - Check if whether the item contains keyword in name, description, location.
+    // Private helper - Check if whether the item is not null and contains keyword in name, description, location.
     private boolean matchesKeyword(Item item, String keyword) {
-        return item.getName().toLowerCase().contains(keyword)
-                || item.getDescription().toLowerCase().contains(keyword)
-                || item.getLocation().toLowerCase().contains(keyword);
+        return (item.getName() != null && item.getName().toLowerCase().contains(keyword))
+            || (item.getDescription() != null && item.getDescription().toLowerCase().contains(keyword))
+            || (item.getLocation() != null && item.getLocation().toLowerCase().contains(keyword));
     }
 }

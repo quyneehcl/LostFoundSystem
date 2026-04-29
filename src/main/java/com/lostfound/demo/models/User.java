@@ -1,7 +1,7 @@
 package com.lostfound.demo.models;
 
 /**
- * User - Data class representing a user in the Lost & Found system.
+ * Data class representing a user in the Lost & Found system
  * @author Nguyen The Minh Duc
  */
 

@@ -3,8 +3,8 @@ package com.lostfound.demo.models;
 import java.util.HashMap;
 
 /**
- * MatchResult - Represents the outcome of comparing a FoundItem with LostItems.
- * Stores key information along with a matching score (0-100).
+ * Represents the outcome of comparing a FoundItem with LostItems or a LostItem with FoundItems
+ * Stores key information along with a matching score (0-100)
  * @author Phan Minh Duc
  */
 
