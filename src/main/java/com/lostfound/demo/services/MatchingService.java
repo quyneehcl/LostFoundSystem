@@ -2,6 +2,7 @@ package com.lostfound.demo.services;
 
 import com.lostfound.demo.models.FoundItem;
 import com.lostfound.demo.models.MatchResult;
+import com.lostfound.demo.models.LostItem;
 import com.lostfound.demo.models.Item;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +17,16 @@ public class MatchingService {
             if (item.getId().equals(foundItem.getId())) continue;
 
             if(item.getItemType().equalsIgnoreCase("lost") && item.getStatus().equalsIgnoreCase("active")){
-                double score = calculateScore(foundItem, item);
+                double score = calculateScore(foundItem.getCategory(), item.getCategory(),
+                                            foundItem.getLocation(), item.getLocation(),
+                                            foundItem.getName(), item.getName(),
+                                            foundItem.getDescription, item.getDescription());
 
                 if(score > 0){
-                    pd.add(new MatchResult(
-                        lostItem.getId(), // itemId (source)
+                    pq.add(new MatchResult(
+                        foundItem.getId(), // itemId (source)
                         item.getId(), // matchedItemId
-                        lostItem.getName(), // itemName
+                        foundItem.getName(), // itemName
                         item.getName(), // matchedItemName
                         item.getItemType(), // matchedItemType
                         item.getCategory(),  // matchedItemCategory
@@ -41,17 +45,20 @@ public class MatchingService {
         return results;
     }
 
-    public List<MatchResult> findMatchesForLost(FoundItem foundItem, List<Item> allItems){
+    public List<MatchResult> findMatchesForLost(LostItem lostItem, List<Item> allItems){
         PriorityQueue<MatchResult> pq = new PriorityQueue<>();
 
         for(Item item : allItems){
-            if (item.getId().equals(foundItem.getId())) continue;
+            if (item.getId().equals(lostItem.getId())) continue;
 
-            if(item.getItemType().equalsIgnoreCase("lost") && item.getStatus().equalsIgnoreCase("active")){
-                double score = calculateScore(foundItem, item);
+            if(item.getItemType().equalsIgnoreCase("found") && item.getStatus().equalsIgnoreCase("active")){
+                double score = calculateScore(lostItem.getCategory(), item.getCategory(),
+                                            lostItem.getLocation(), item.getLocation(),
+                                            lostItem.getName(), item.getName(),
+                                            lostItem.getDescription(), item.getDescription());
 
                 if(score > 0){
-                    pd.add(new MatchResult(
+                    pq.add(new MatchResult(
                         lostItem.getId(), // itemId (source)
                         item.getId(), // matchedItemId
                         lostItem.getName(), // itemName
@@ -69,21 +76,27 @@ public class MatchingService {
         while (!pq.isEmpty()) {
             results.add(pq.poll());
         }
+    
 
         return results;
     
-    public double calculateScore(FoundItem foundItem, Item item){
-           if (item.getCategory() != null && foundItem.getCategory() != null &&
-                    item.getCategory().equalsIgnoreCase(foundItem.getCategory())) {
+    public double calculateScore(String catA, String catB,
+                                String locA, String locB,
+                                String nameA, String nameB,
+                                String descA, String descB
+    ){
+            double score = 0;
+           if (catA != null && catB != null && catA.equalsIgnoreCase(catB)) {
                             score += 40;
                 }
-                score += stringSimilarity(foundItem.getLocation(), item.getLocation()) * 30;
+                score += stringSimilarity(locA, locB) * 30;
 
-                score += stringSimilarity(foundItem.getName(), item.getName()) * 20;
+                score += stringSimilarity(nameA, nameB) * 20;
 
-                score += stringSimilarity(foundItem.getDescription(), item.getDescription()) * 10;
+                score += stringSimilarity(descA, descB) * 10;
 
             }
+            return Math.round(score*100.0)/100.0;
     }
 
     public double stringSimilarity(String s1, String s2) {
