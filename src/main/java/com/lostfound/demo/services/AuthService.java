@@ -3,6 +3,8 @@ package com.lostfound.demo.services;
 import java.util.HashMap;
 import java.util.UUID;
 
+import org.springframework.stereotype.Service;
+
 import com.lostfound.demo.models.User;
 
 /**
@@ -10,6 +12,7 @@ import com.lostfound.demo.models.User;
  * @author Phan Minh Duc
  */
 
+@Service
 public class AuthService {
     private HashMap<String, User> userMap = new HashMap<>();
 
