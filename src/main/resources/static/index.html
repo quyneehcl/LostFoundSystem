@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VinUni Lost & Found - Campus Lost & Found System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth-compat.js"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { brand: '#1a4fa0' } } } }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .fade-in { animation: fadeIn 0.4s ease forwards; opacity: 0; transform: translateY(4px); }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+        .toast-anim { animation: slideUp 0.3s ease forwards; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-50/50 text-foreground min-h-screen flex flex-col">
+
+    <!-- AUTH MODAL -->
+    <div id="authOverlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="bg-gradient-to-br from-[#1a4fa0] via-[#2563b0] to-[#1e4a9e] px-8 py-8 text-white relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/5"></div>
+                <div class="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-white/5"></div>
+                <div class="relative z-10">
+                    <h1 class="text-2xl font-bold">Welcome</h1>
+                    <p class="mt-1 text-sm text-white/70">VinUniversity Lost & Found System</p>
+                </div>
+            </div>
+            <div class="p-8">
+                <div class="flex rounded-xl bg-gray-100 p-1 mb-6">
+                    <button onclick="switchAuthTab('login')" id="tabLogin" class="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all bg-white text-[#1a4fa0] shadow-sm">Log in</button>
+                    <button onclick="switchAuthTab('signup')" id="tabSignup" class="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-gray-500 hover:text-gray-700">Sign up</button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                        <input type="text" id="authName" placeholder="Your full name" style="display:none" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#1a4fa0] focus:ring-2 focus:ring-[#1a4fa0]/20 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+                        <input type="email" id="authEmail" placeholder="you@vinuni.edu.vn" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#1a4fa0] focus:ring-2 focus:ring-[#1a4fa0]/20 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                        <input type="password" id="authPassword" placeholder="Min 6 characters" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#1a4fa0] focus:ring-2 focus:ring-[#1a4fa0]/20 transition-all">
+                    </div>
+                    <div id="authError" class="hidden text-xs text-red-500 text-center"></div>
+                    <button onclick="handleAuth()" id="authSubmitBtn" class="w-full bg-[#1a4fa0] hover:bg-[#1a4fa0]/90 text-white rounded-lg py-2.5 text-sm font-medium transition-all shadow-sm">Log in</button>
+                    <p class="text-xs text-gray-400 text-center">Use <strong>admin@vinuni.edu.vn</strong> as admin account</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="sticky top-0 z-50 w-full border-b border-gray-200/80 bg-white/90 backdrop-blur-md">
+        <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+            <button onclick="showSection('browse')" class="flex items-center gap-2.5 transition-opacity hover:opacity-80">
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1a4fa0] shadow-sm shadow-[#1a4fa0]/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div class="hidden sm:block">
+                    <span class="text-lg font-bold text-[#1a4fa0]">VinUni</span>
+                    <span class="ml-1 text-lg font-semibold text-gray-700">Lost & Found</span>
+                </div>
+                <span class="text-lg font-bold text-[#1a4fa0] sm:hidden">VLF</span>
+            </button>
+            <nav class="hidden items-center gap-1 md:flex">
+                <button onclick="showSection('browse')" id="navBrowse" class="rounded-lg px-4 py-2 text-sm font-medium transition-all bg-[#1a4fa0] text-white shadow-sm">Browse Items</button>
+                <button onclick="showSection('reportLost')" id="navLost" class="rounded-lg px-4 py-2 text-sm font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900">Report Lost</button>
+                <button onclick="showSection('reportFound')" id="navFound" class="rounded-lg px-4 py-2 text-sm font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900">Report Found</button>
+                <button onclick="showSection('myReports')" id="navMyReports" class="rounded-lg px-4 py-2 text-sm font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900">My Reports</button>
+            </nav>
+            <div class="flex items-center gap-2">
+                <div class="hidden md:flex items-center gap-2">
+                    <div id="userAvatar" onclick="toggleUserMenu()" class="h-8 w-8 rounded-full bg-[#1a4fa0] text-white flex items-center justify-center text-sm font-bold cursor-pointer hover:opacity-80 transition-opacity" style="display:none"></div>
+                    <span id="userName" class="text-sm font-medium text-gray-700" style="display:none"></span>
+                    <div id="userMenu" class="absolute top-14 right-4 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-48 hidden">
+                        <button onclick="showMyReports()" class="w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors">My Reports</button>
+                        <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">Log out</button>
+                    </div>
+                </div>
+                <button onclick="openAuth()" id="signInBtn" class="inline-flex items-center gap-1.5 bg-[#1a4fa0] hover:bg-[#1a4fa0]/90 text-white rounded-md h-8 px-3 text-sm font-medium transition-all shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></svg>
+                    <span class="hidden sm:inline">Sign In</span>
+                </button>
+                <button onclick="toggleMobileMenu()" class="md:hidden flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16"/><path d="M4 18h16"/><path d="M4 6h16"/></svg>
+                </button>
+            </div>
+        </div>
+        <div id="mobileMenu" class="hidden md:hidden border-t border-gray-100 bg-white px-4 pb-3 pt-2 space-y-1">
+            <button onclick="showSection('browse');toggleMobileMenu()" class="w-full text-left rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100">Browse Items</button>
+            <button onclick="showSection('reportLost');toggleMobileMenu()" class="w-full text-left rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100">Report Lost</button>
+            <button onclick="showSection('reportFound');toggleMobileMenu()" class="w-full text-left rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100">Report Found</button>
+            <button onclick="showSection('myReports');toggleMobileMenu()" class="w-full text-left rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100">My Reports</button>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+
+        <!-- BROWSE SECTION -->
+        <div id="browseSection">
+            <div class="mb-8">
+                <section class="rounded-2xl bg-[#1a4fa0] px-6 py-10 text-white shadow-lg shadow-[#1a4fa0]/15 sm:px-10 sm:py-14">
+                    <div class="relative z-10">
+                        <h1 class="text-2xl font-bold sm:text-3xl lg:text-4xl">Campus Lost & Found</h1>
+                        <p class="mt-2 max-w-xl text-sm text-white/70 sm:text-base">Help the VinUniversity community report and recover lost items. Search, match, and reunite items with their owners.</p>
+                    </div>
+                </section>
+            </div>
+            <div class="space-y-5">
+                <form onsubmit="event.preventDefault(); searchItems()" class="flex gap-2">
+                    <div class="relative flex-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+                        <input id="searchInput" type="text" placeholder="Search items by name, description, or location..." class="w-full h-11 rounded-md border border-gray-200 bg-white pl-10 pr-10 text-sm outline-none focus:border-[#1a4fa0] focus:ring-2 focus:ring-[#1a4fa0]/20 transition-all shadow-sm">
+                    </div>
+                    <button type="submit" class="bg-[#1a4fa0] hover:bg-[#1a4fa0]/90 text-white rounded-md h-11 px-5 text-sm font-medium transition-all shadow-sm hidden sm:inline-flex items-center gap-2">Search</button>
+                    <button type="button" onclick="toggleMobileFilter()" class="sm:hidden bg-white border border-gray-200 rounded-md h-11 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all shadow-sm">Filter</button>
+                </form>
+
+                <!-- Filters Desktop -->
+                <div id="desktopFilters" class="space-y-4 hidden lg:block">
+                    <div class="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+                        <button onclick="filterItems('all', this)" class="filter-tab-btn rounded-lg px-5 py-2 text-sm font-medium transition-all bg-white text-[#1a4fa0] shadow-sm">All Items</button>
+                        <button onclick="filterItems('lost', this)" class="filter-tab-btn rounded-lg px-5 py-2 text-sm font-medium transition-all text-gray-500 hover:text-gray-700">Lost</button>
+                        <button onclick="filterItems('found', this)" class="filter-tab-btn rounded-lg px-5 py-2 text-sm font-medium transition-all text-gray-500 hover:text-gray-700">Found</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filterByCategory('', this)" class="cat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200 hover:border-[#1a4fa0]/30 hover:text-[#1a4fa0]">All</button>
+                        <button onclick="filterByCategory('Electronics', this)" class="cat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200 hover:border-[#1a4fa0]/30 hover:text-[#1a4fa0]">Electronics</button>
+                        <button onclick="filterByCategory('Bags', this)" class="cat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200 hover:border-[#1a4fa0]/30 hover:text-[#1a4fa0]">Bags</button>
+                        <button onclick="filterByCategory('Accessories', this)" class="cat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200 hover:border-[#1a4fa0]/30 hover:text-[#1a4fa0]">Accessories</button>
+                        <button onclick="filterByCategory('Documents', this)" class="cat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200 hover:border-[#1a4fa0]/30 hover:text-[#1a4fa0]">Documents</button>
+                        <button onclick="filterByCategory('Clothing', this)" class="cat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200 hover:border-[#1a4fa0]/30 hover:text-[#1a4fa0]">Clothing</button>
+                        <button onclick="filterByCategory('Keys', this)" class="cat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200 hover:border-[#1a4fa0]/30 hover:text-[#1a4fa0]">Keys</button>
+                        <button onclick="filterByCategory('Other', this)" class="cat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200 hover:border-[#1a4fa0]/30 hover:text-[#1a4fa0]">Other</button>
+                    </div>
+                </div>
+
+                <!-- Filters Mobile -->
+                <div id="mobileFilters" class="space-y-4 hidden">
+                    <div class="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+                        <button onclick="filterItems('all', this)" class="mfilter-tab rounded-lg px-5 py-2 text-sm font-medium transition-all bg-white text-[#1a4fa0] shadow-sm">All Items</button>
+                        <button onclick="filterItems('lost', this)" class="mfilter-tab rounded-lg px-5 py-2 text-sm font-medium transition-all text-gray-500 hover:text-gray-700">Lost</button>
+                        <button onclick="filterItems('found', this)" class="mfilter-tab rounded-lg px-5 py-2 text-sm font-medium transition-all text-gray-500 hover:text-gray-700">Found</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filterByCategory('', this)" class="mcat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200">All</button>
+                        <button onclick="filterByCategory('Electronics', this)" class="mcat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200">Electronics</button>
+                        <button onclick="filterByCategory('Bags', this)" class="mcat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200">Bags</button>
+                        <button onclick="filterByCategory('Accessories', this)" class="mcat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200">Accessories</button>
+                        <button onclick="filterByCategory('Documents', this)" class="mcat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200">Documents</button>
+                        <button onclick="filterByCategory('Clothing', this)" class="mcat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200">Clothing</button>
+                        <button onclick="filterByCategory('Keys', this)" class="mcat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200">Keys</button>
+                        <button onclick="filterByCategory('Other', this)" class="mcat-chip rounded-full px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-gray-600 border border-gray-200">Other</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <span id="itemCount" class="text-gray-500">0 items found</span>
+                </div>
+                <div id="itemsGrid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+                <div id="browsePagination" class="flex items-center justify-between pt-4 hidden">
+                    <span id="browsePageInfo" class="text-sm text-gray-500"></span>
+                    <div class="flex items-center gap-2">
+                        <button onclick="browsePrevPage()" id="browsePrevBtn" class="inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-xs font-medium transition-all border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Previous</button>
+                        <button onclick="browseNextPage()" id="browseNextBtn" class="inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-xs font-medium transition-all border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MY REPORTS SECTION -->
+        <div id="myReportsSection" class="hidden">
+            <div class="mb-6">
+                <h2 id="myReportsTitle" class="text-2xl font-bold text-gray-900">My Reports</h2>
+                <p id="myReportsDesc" class="mt-1 text-sm text-gray-500">All items you have reported (both lost and found).</p>
+            </div>
+            <div id="myItemsList" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+            <div id="myReportsPagination" class="flex items-center justify-between pt-4 hidden">
+                <span id="myReportsPageInfo" class="text-sm text-gray-500"></span>
+                <div class="flex items-center gap-2">
+                    <button onclick="myReportsPrevPage()" id="myReportsPrevBtn" class="inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-xs font-medium transition-all border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Previous</button>
+                    <button onclick="myReportsNextPage()" id="myReportsNextBtn" class="inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-xs font-medium transition-all border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- REPORT SECTION -->
+        <div id="reportSection" class="hidden">
+            <div class="mb-6">
+                <h2 id="reportTitle" class="text-2xl font-bold text-gray-900">Report a Lost Item</h2>
+                <p class="mt-1 text-sm text-gray-500">Fill in the details below to submit your report.</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 sm:p-8 max-w-2xl">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Item Name *</label>
+                        <input type="text" id="itemName" placeholder="e.g., Blue backpack" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#1a4fa0] focus:ring-2 focus:ring-[#1a4fa0]/20 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Category *</label>
+                        <select id="itemCategory" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#1a4fa0] focus:ring-2 focus:ring-[#1a4fa0]/20 transition-all bg-white">
+                            <option value="">Select category...</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Bags">Bags</option>
+                            <option value="Accessories">Accessories</option>
+                            <option value="Clothing">Clothing</option>
+                            <option value="Documents">Documents</option>
+                            <option value="Keys">Keys</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                        <textarea id="itemDescription" rows="3" placeholder="Describe the item in detail..." class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#1a4fa0] focus:ring-2 focus:ring-[#1a4fa0]/20 transition-all resize-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Location</label>
+                        <input type="text" id="itemLocation" placeholder="e.g., Library 2nd floor" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#1a4fa0] focus:ring-2 focus:ring-[#1a4fa0]/20 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Contact Info *</label>
+                        <input type="text" id="itemContact" placeholder="Phone or email" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#1a4fa0] focus:ring-2 focus:ring-[#1a4fa0]/20 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
+                        <input type="date" id="itemDate" class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#1a4fa0] focus:ring-2 focus:ring-[#1a4fa0]/20 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Image URL (optional)</label>
+                        <input type="text" id="itemImageUrl" placeholder="https://..." class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#1a4fa0] focus:ring-2 focus:ring-[#1a4fa0]/20 transition-all">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <div onclick="document.getElementById('imageFileInput').click()" class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#1a4fa0]/30 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto text-gray-300"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                            <p class="mt-2 text-sm text-gray-400">Click to upload image</p>
+                        </div>
+                        <input type="file" id="imageFileInput" accept="image/*" style="display:none" onchange="previewImage(this)">
+                        <div id="uploadPreview" class="mt-2"></div>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <button onclick="submitReport()" id="submitBtn" class="w-full bg-[#1a4fa0] hover:bg-[#1a4fa0]/90 text-white rounded-lg py-3 text-sm font-medium transition-all shadow-sm">Submit Report</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-gray-200/80 bg-white mt-auto">
+        <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 flex items-center justify-between text-xs text-gray-400">
+            <span>VinUni Lost & Found - COMP1020 Group 12</span>
+            <span>Spring 2026</span>
+        </div>
+    </footer>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-6 right-6 z-[200] hidden">
+        <div id="toastContent" class="toast-anim px-5 py-3 rounded-lg shadow-lg text-sm font-medium text-white"></div>
+    </div>
+
+    <!-- ITEM DETAIL MODAL -->
+    <div id="detailModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div id="detailImage" class="h-56 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center"></div>
+            <div class="p-6">
+                <div class="flex items-center gap-2 mb-3">
+                    <span id="detailBadge" class="rounded-md px-2 py-0.5 text-[11px] font-semibold border"></span>
+                    <span id="detailCategory" class="text-xs text-gray-400"></span>
+                </div>
+                <h2 id="detailName" class="text-xl font-bold text-gray-900 mb-2"></h2>
+                <p id="detailDesc" class="text-sm text-gray-500 mb-4 leading-relaxed"></p>
+                <div class="space-y-2 mb-6 text-sm text-gray-500">
+                    <div class="flex items-center gap-2"><span id="detailLocation"></span></div>
+                    <div class="flex items-center gap-2"><span id="detailDate"></span></div>
+                    <div class="flex items-center gap-2"><span id="detailContact"></span></div>
+                </div>
+                <div id="detailMatches" class="hidden mb-6">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Matched Items</h4>
+                    <div id="detailMatchesList" class="space-y-2"></div>
+                </div>
+                <div class="flex gap-2">
+                    <button id="detailReturnBtn" onclick="returnFromModal()" class="flex-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg py-2.5 text-sm font-medium hover:bg-emerald-100 transition-all">Mark Returned</button>
+                    <button id="detailDeleteBtn" onclick="deleteFromModal()" class="flex-1 bg-red-50 text-red-600 border border-red-200 rounded-lg py-2.5 text-sm font-medium hover:bg-red-100 transition-all">Delete</button>
+                    <button onclick="closeDetail()" class="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === FIREBASE CONFIG ===
+        const firebaseConfig = {
+            apiKey: "AIzaSyBl5lbKIRYUR2lN40RjSHdN3DyvIgCdrVI",
+            authDomain: "vinuni-lostfou.firebaseapp.com",
+            projectId: "vinuni-lostfou",
+            storageBucket: "vinuni-lostfou.firebasestorage.app",
+            messagingSenderId: "495642298967",
+            appId: "1:495642298967:web:61a87bc61ae50dd9a4f112"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // === CLOUDINARY CONFIG ===
+        const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/domtcisru/image/upload';
+        const CLOUDINARY_UPLOAD_PRESET = 'lostfound_upload';
+
+        // ⚠️ ĐỔI URL NÀY SAU KHI DEPLOY RAILWAY
+        const API = 'http://localhost:8080/api';
+
+        let currentUser = null;
+        let currentType = 'lost';
+        let currentFilter = 'all';
+        let currentCategory = '';
+        let currentDetailId = null;
+        let allItems = [];
+        const ITEMS_PER_PAGE = 9;
+        let browsePage = 1;
+        let filteredItems = [];
+        let myReportsPage = 1;
+        let myReportsData = [];
+        let authMode = 'login';
+
+        // === AUTH ===
+        function switchAuthTab(tab) {
+            authMode = tab;
+            document.getElementById('tabLogin').className = tab === 'login'
+                ? 'flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all bg-white text-[#1a4fa0] shadow-sm'
+                : 'flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-gray-500 hover:text-gray-700';
+            document.getElementById('tabSignup').className = tab === 'signup'
+                ? 'flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all bg-white text-[#1a4fa0] shadow-sm'
+                : 'flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-gray-500 hover:text-gray-700';
+            document.getElementById('authName').style.display = tab === 'signup' ? 'block' : 'none';
+            document.getElementById('authSubmitBtn').textContent = tab === 'login' ? 'Log in' : 'Create Account';
+            document.getElementById('authError').classList.add('hidden');
+        }
+
+        function showAuthError(msg) {
+            const el = document.getElementById('authError');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        async function handleAuth() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const name = document.getElementById('authName').value.trim();
+            if (!email || !password) { showAuthError('Please enter email and password.'); return; }
+            if (authMode === 'signup' && !name) { showAuthError('Please enter your name.'); return; }
+            if (password.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
+
+            document.getElementById('authSubmitBtn').textContent = 'Please wait...';
+            document.getElementById('authSubmitBtn').disabled = true;
+
+            try {
+                if (authMode === 'signup') {
+                    const cred = await auth.createUserWithEmailAndPassword(email, password);
+                    await cred.user.updateProfile({ displayName: name });
+                    // Đăng ký vào backend AuthService
+                    await fetch(API + '/auth', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, name })
+                    });
+                    onAuthSuccess(cred.user);
+                } else {
+                    const cred = await auth.signInWithEmailAndPassword(email, password);
+                    onAuthSuccess(cred.user);
+                }
+            } catch (e) {
+                let msg = 'Authentication failed.';
+                if (e.code === 'auth/email-already-in-use') msg = 'This email is already registered.';
+                else if (e.code === 'auth/user-not-found') msg = 'No account found with this email.';
+                else if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') msg = 'Wrong password.';
+                else if (e.code === 'auth/invalid-email') msg = 'Invalid email address.';
+                else if (e.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+                showAuthError(msg);
+                document.getElementById('authSubmitBtn').textContent = authMode === 'login' ? 'Log in' : 'Create Account';
+                document.getElementById('authSubmitBtn').disabled = false;
+            }
+        }
+
+        function onAuthSuccess(user) {
+            const email = user.email;
+            const name = user.displayName || email.split('@')[0];
+            const role = email === 'admin@vinuni.edu.vn' ? 'admin' : 'user';
+            currentUser = { email, name, role };
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('authError').classList.add('hidden');
+            document.getElementById('authSubmitBtn').textContent = authMode === 'login' ? 'Log in' : 'Create Account';
+            document.getElementById('authSubmitBtn').disabled = false;
+            updateUserUI();
+            loadItems();
+            showToast('Welcome, ' + currentUser.name + '!', 'success');
+        }
+
+        function openAuth() {
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('authError').classList.add('hidden');
+        }
+
+        async function handleLogout() {
+            try { await auth.signOut(); } catch(e) {}
+            currentUser = null;
+            document.getElementById('userMenu').classList.add('hidden');
+            document.getElementById('userAvatar').style.display = 'none';
+            document.getElementById('userName').style.display = 'none';
+            document.getElementById('signInBtn').style.display = 'inline-flex';
+            showSection('browse');
+            openAuth();
+        }
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                const email = user.email;
+                const name = user.displayName || email.split('@')[0];
+                const role = email === 'admin@vinuni.edu.vn' ? 'admin' : 'user';
+                currentUser = { email, name, role };
+                document.getElementById('authOverlay').style.display = 'none';
+                updateUserUI();
+                loadItems();
+            }
+        });
+
+        function updateUserUI() {
+            if (!currentUser) return;
+            document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+            document.getElementById('userAvatar').style.display = 'flex';
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userName').style.display = 'inline';
+            document.getElementById('signInBtn').style.display = 'none';
+        }
+
+        function toggleUserMenu() { document.getElementById('userMenu').classList.toggle('hidden'); }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#userAvatar') && !e.target.closest('#userMenu'))
+                document.getElementById('userMenu').classList.add('hidden');
+        });
+
+        // === NAV ===
+        function showSection(section) {
+            ['browseSection','myReportsSection','reportSection'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.querySelectorAll('#navBrowse,#navLost,#navFound,#navMyReports').forEach(b => {
+                b.className = 'rounded-lg px-4 py-2 text-sm font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900';
+            });
+            if (section === 'browse') {
+                document.getElementById('browseSection').classList.remove('hidden');
+                document.getElementById('navBrowse').className = 'rounded-lg px-4 py-2 text-sm font-medium transition-all bg-[#1a4fa0] text-white shadow-sm';
+            } else if (section === 'myReports') {
+                document.getElementById('myReportsSection').classList.remove('hidden');
+                document.getElementById('navMyReports').className = 'rounded-lg px-4 py-2 text-sm font-medium transition-all bg-[#1a4fa0] text-white shadow-sm';
+                const isAdmin = currentUser && currentUser.role === 'admin';
+                document.getElementById('myReportsTitle').textContent = isAdmin ? 'All Items (Admin)' : 'My Reports';
+                document.getElementById('myReportsDesc').textContent = isAdmin ? 'Manage all reported items in the system.' : 'All items you have reported.';
+                loadMyReports();
+            } else if (section === 'reportLost') {
+                document.getElementById('reportSection').classList.remove('hidden');
+                document.getElementById('navLost').className = 'rounded-lg px-4 py-2 text-sm font-medium transition-all bg-[#1a4fa0] text-white shadow-sm';
+                document.getElementById('reportTitle').textContent = 'Report a Lost Item';
+                currentType = 'lost';
+                document.getElementById('submitBtn').textContent = 'Submit Lost Report';
+            } else if (section === 'reportFound') {
+                document.getElementById('reportSection').classList.remove('hidden');
+                document.getElementById('navFound').className = 'rounded-lg px-4 py-2 text-sm font-medium transition-all bg-[#1a4fa0] text-white shadow-sm';
+                document.getElementById('reportTitle').textContent = 'Report a Found Item';
+                currentType = 'found';
+                document.getElementById('submitBtn').textContent = 'Submit Found Report';
+            }
+        }
+
+        function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('hidden'); }
+        function toggleMobileFilter() { document.getElementById('mobileFilters').classList.toggle('hidden'); }
+
+        // === ITEMS ===
+        async function loadItems(keyword) {
+            try {
+                let url = API + '/items';
+                if (keyword) url += '/search?keyword=' + encodeURIComponent(keyword);
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.success) {
+                    allItems = data.items;
+                    applyFilters();
+                }
+            } catch (e) { showToast('Failed to load items', 'error'); }
+        }
+
+        function applyFilters() {
+            let items = allItems;
+            if (currentFilter !== 'all') items = items.filter(i => i.type === currentFilter);
+            if (currentCategory) items = items.filter(i => i.category === currentCategory);
+            filteredItems = items;
+            browsePage = 1;
+            document.getElementById('itemCount').textContent = items.length + ' item' + (items.length !== 1 ? 's' : '') + ' found';
+            renderBrowsePage();
+        }
+
+        function renderBrowsePage() {
+            const grid = document.getElementById('itemsGrid');
+            const total = filteredItems.length;
+            const totalPages = Math.ceil(total / ITEMS_PER_PAGE) || 1;
+            const start = (browsePage - 1) * ITEMS_PER_PAGE;
+            const end = Math.min(start + ITEMS_PER_PAGE, total);
+            const pageItems = filteredItems.slice(start, end);
+
+            if (!pageItems || pageItems.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center py-16"><p class="text-gray-400 text-sm">No items found</p></div>';
+                document.getElementById('browsePagination').classList.add('hidden');
+                return;
+            }
+            renderItems(pageItems);
+            const pag = document.getElementById('browsePagination');
+            if (total > ITEMS_PER_PAGE) {
+                pag.classList.remove('hidden');
+                document.getElementById('browsePageInfo').textContent = 'Showing ' + (start + 1) + '-' + end + ' of ' + total;
+                document.getElementById('browsePrevBtn').disabled = browsePage <= 1;
+                document.getElementById('browseNextBtn').disabled = browsePage >= totalPages;
+            } else { pag.classList.add('hidden'); }
+        }
+
+        function browsePrevPage() { if (browsePage > 1) { browsePage--; renderBrowsePage(); window.scrollTo({top:0,behavior:'smooth'}); } }
+        function browseNextPage() { const t = Math.ceil(filteredItems.length/ITEMS_PER_PAGE); if (browsePage < t) { browsePage++; renderBrowsePage(); window.scrollTo({top:0,behavior:'smooth'}); } }
+
+        function renderItems(items, gridId) {
+            const grid = document.getElementById(gridId || 'itemsGrid');
+            grid.innerHTML = items.map((item, i) => `
+                <div class="fade-in" style="animation-delay:${i*50}ms">
+                    <div onclick="openDetail('${item.id}')" class="flex flex-col rounded-xl shadow-sm group cursor-pointer overflow-hidden border border-gray-100 bg-white transition-all duration-200 hover:border-[#1a4fa0]/20 hover:shadow-lg">
+                        <div class="relative h-44 overflow-hidden bg-gray-50">
+                            <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                                ${item.imageUrl ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover">` : '<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-gray-200"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/></svg>'}
+                            </div>
+                            <div class="absolute left-3 top-3">
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 border text-[11px] font-semibold ${item.type==='found'?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-red-50 text-red-600 border-red-200'}">${item.type.toUpperCase()}</span>
+                            </div>
+                            ${item.status==='returned'?'<div class="absolute right-3 top-3"><span class="inline-flex items-center rounded-md px-2 py-0.5 border text-[11px] font-semibold bg-gray-100 text-gray-500 border-gray-200">RETURNED</span></div>':''}
+                        </div>
+                        <div class="p-4">
+                            <h3 class="mb-1 line-clamp-1 text-base font-semibold text-gray-900">${escapeHtml(item.name)}</h3>
+                            <p class="mb-3 line-clamp-2 text-sm leading-relaxed text-gray-500">${escapeHtml(item.description||'')}</p>
+                            <div class="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-400">
+                                <span>${escapeHtml(item.location||'')}</span>
+                                <span>${item.date||''}</span>
+                                <span>${escapeHtml(item.category||'')}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function searchItems() { loadItems(document.getElementById('searchInput').value.trim()); }
+
+        function filterItems(type, el) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-tab-btn').forEach(b => { b.className = 'filter-tab-btn rounded-lg px-5 py-2 text-sm font-medium transition-all text-gray-500 hover:text-gray-700'; });
+            document.querySelectorAll('.mfilter-tab').forEach(b => { b.className = 'mfilter-tab rounded-lg px-5 py-2 text-sm font-medium transition-all text-gray-500 hover:text-gray-700'; });
+            if (el) el.className = el.className.replace('text-gray-500 hover:text-gray-700', 'bg-white text-[#1a4fa0] shadow-sm');
+            applyFilters();
+        }
+
+        function filterByCategory(cat, el) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-chip, .mcat-chip').forEach(c => { c.className = c.className.replace(/bg-\[#1a4fa0\]\/10 text-\[#1a4fa0\] border-\[#1a4fa0\]\/30/g, 'bg-white text-gray-600 border-gray-200'); });
+            if (cat && el) el.className = el.className.replace('bg-white text-gray-600 border-gray-200', 'bg-[#1a4fa0]/10 text-[#1a4fa0] border-[#1a4fa0]/30');
+            applyFilters();
+        }
+
+        // === DETAIL MODAL ===
+        async function openDetail(id, skipMatches) {
+            const item = allItems.find(i => i.id === id);
+            if (!item) return;
+            currentDetailId = id;
+
+            document.getElementById('detailImage').innerHTML = item.imageUrl
+                ? `<img src="${escapeHtml(item.imageUrl)}" class="w-full h-full object-cover">`
+                : '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-gray-200"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/></svg>';
+
+            const badge = document.getElementById('detailBadge');
+            badge.textContent = item.type.toUpperCase();
+            badge.className = 'rounded-md px-2 py-0.5 text-[11px] font-semibold border ' + (item.type==='found'?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-red-50 text-red-600 border-red-200');
+
+            document.getElementById('detailName').textContent = item.name;
+            document.getElementById('detailDesc').textContent = item.description || '';
+            document.getElementById('detailLocation').textContent = item.location || '';
+            document.getElementById('detailDate').textContent = item.date || '';
+            document.getElementById('detailContact').textContent = item.contactInfo || '';
+            document.getElementById('detailCategory').textContent = item.category || '';
+
+            const matchesBlock = document.getElementById('detailMatches');
+            if (skipMatches) {
+                document.getElementById('detailMatchesList').innerHTML = '';
+                matchesBlock.classList.add('hidden');
+            } else if (item.status !== 'returned') {
+                try {
+                    const res = await fetch(API + '/items/matches/' + id);
+                    const data = await res.json();
+                    if (data.success && data.matches.length > 0) {
+                        document.getElementById('detailMatchesList').innerHTML = data.matches.map(m => `
+                            <div onclick="openMatchDetail('${m.matchedItemId}')" class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 rounded-lg px-4 py-3 cursor-pointer hover:bg-emerald-100/50 transition-all">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-700">${escapeHtml(m.matchedItemName)}</p>
+                                    <p class="text-xs text-gray-400 mt-0.5">${escapeHtml(m.matchedItemLocation)} - ${escapeHtml(m.matchedItemCategory)}</p>
+                                </div>
+                                <span class="text-sm font-bold text-emerald-600">${m.score}%</span>
+                            </div>
+                        `).join('');
+                        matchesBlock.classList.remove('hidden');
+                    } else { matchesBlock.classList.add('hidden'); }
+                } catch (e) { matchesBlock.classList.add('hidden'); }
+            } else { matchesBlock.classList.add('hidden'); }
+
+            const isAdmin = currentUser && currentUser.role === 'admin';
+            const canManage = isAdmin || (currentUser && item.reportedBy === currentUser.email);
+            document.getElementById('detailReturnBtn').style.display = (item.status !== 'returned' && canManage) ? 'flex' : 'none';
+            document.getElementById('detailDeleteBtn').style.display = canManage ? 'flex' : 'none';
+            document.getElementById('detailModal').style.display = 'flex';
+        }
+
+        function closeDetail() { document.getElementById('detailModal').style.display = 'none'; currentDetailId = null; }
+
+        async function returnFromModal() {
+            if (!currentDetailId) return;
+            try {
+                const res = await fetch(API + '/items/return/' + currentDetailId, { method: 'PUT' });
+                const data = await res.json();
+                if (data.success) { showToast('Marked as returned!', 'success'); closeDetail(); loadItems(); }
+            } catch (e) { showToast('Failed', 'error'); }
+        }
+
+        // ✅ SỬA: thêm email vào body để backend check quyền
+        async function deleteFromModal() {
+            if (!currentDetailId || !confirm('Delete this item?')) return;
+            try {
+                const res = await fetch(API + '/items/' + currentDetailId, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentUser ? currentUser.email : '' })
+                });
+                const data = await res.json();
+                if (data.success) { showToast('Deleted!', 'success'); closeDetail(); loadItems(); }
+                else { showToast(data.message || 'Failed', 'error'); }
+            } catch (e) { showToast('Failed', 'error'); }
+        }
+
+        // === REPORT ===
+        async function submitReport() {
+            const name = document.getElementById('itemName').value.trim();
+            const category = document.getElementById('itemCategory').value;
+            const contactInfo = document.getElementById('itemContact').value.trim();
+            if (!name) { showToast('Please enter item name', 'error'); return; }
+            if (!category) { showToast('Please select a category', 'error'); return; }
+            if (!contactInfo) { showToast('Please enter contact info', 'error'); return; }
+            try {
+                const res = await fetch(API + '/items', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: currentType, name, category,
+                        description: document.getElementById('itemDescription').value.trim(),
+                        location: document.getElementById('itemLocation').value.trim(),
+                        date: document.getElementById('itemDate').value || new Date().toISOString().split('T')[0],
+                        contactInfo,
+                        imageUrl: document.getElementById('itemImageUrl').value.trim(),
+                        reportedBy: currentUser ? currentUser.email : 'anonymous'
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Report submitted!', 'success');
+                    ['itemName','itemDescription','itemLocation','itemContact','itemImageUrl'].forEach(id => document.getElementById(id).value = '');
+                    document.getElementById('itemCategory').value = '';
+                    document.getElementById('uploadPreview').innerHTML = '';
+                    showSection('browse'); loadItems();
+                } else { showToast(data.message || 'Failed', 'error'); }
+            } catch (e) { showToast('Failed', 'error'); }
+        }
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > 10 * 1024 * 1024) { showToast('Image must be under 10MB', 'error'); return; }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('uploadPreview').innerHTML = `<div class="flex items-center gap-3 mt-2 p-3 bg-blue-50 rounded-lg border border-blue-100"><div class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div><span class="text-xs text-blue-600">Uploading...</span></div>`;
+                };
+                reader.readAsDataURL(file);
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                fetch(CLOUDINARY_URL, { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.secure_url) {
+                            document.getElementById('itemImageUrl').value = data.secure_url;
+                            document.getElementById('uploadPreview').innerHTML = `<img src="${data.secure_url}" class="max-w-xs rounded-lg mt-2"><p class="text-xs text-emerald-600 mt-1">Uploaded!</p>`;
+                            showToast('Image uploaded!', 'success');
+                        } else {
+                            document.getElementById('uploadPreview').innerHTML = `<p class="text-xs text-red-500 mt-2">Upload failed. Try pasting URL manually.</p>`;
+                        }
+                    })
+                    .catch(() => {
+                        document.getElementById('uploadPreview').innerHTML = `<p class="text-xs text-red-500 mt-2">Upload failed.</p>`;
+                    });
+            }
+        }
+
+        function showMyReports() {
+            document.getElementById('userMenu').classList.add('hidden');
+            showSection('myReports');
+        }
+
+        // === MY REPORTS ===
+        async function loadMyReports() {
+            const container = document.getElementById('myItemsList');
+            if (!currentUser) {
+                container.innerHTML = '<div class="text-center py-16 text-gray-400 text-sm">Please sign in.</div>';
+                return;
+            }
+            const isAdmin = currentUser.role === 'admin';
+            try {
+                const res = await fetch(API + '/items');
+                const data = await res.json();
+                if (!data.success) { container.innerHTML = '<div class="text-center py-16 text-red-400 text-sm">Failed to load.</div>'; return; }
+                myReportsData = isAdmin ? data.items : data.items.filter(i => i.reportedBy === currentUser.email);
+                myReportsPage = 1;
+                renderMyReportsPage();
+            } catch (e) { container.innerHTML = '<div class="text-center py-16 text-red-400 text-sm">Connection error.</div>'; }
+        }
+
+        function renderMyReportsPage() {
+            const container = document.getElementById('myItemsList');
+            const total = myReportsData.length;
+            const totalPages = Math.ceil(total / ITEMS_PER_PAGE) || 1;
+            const start = (myReportsPage - 1) * ITEMS_PER_PAGE;
+            const end = Math.min(start + ITEMS_PER_PAGE, total);
+            const pageItems = myReportsData.slice(start, end);
+
+            if (total === 0) {
+                container.innerHTML = '<div class="text-center py-16"><p class="text-gray-400 text-sm">No reports yet.</p></div>';
+                document.getElementById('myReportsPagination').classList.add('hidden');
+                return;
+            }
+
+            const isAdmin = currentUser && currentUser.role === 'admin';
+            container.innerHTML = pageItems.map(item => `
+                <div class="fade-in" id="report-${item.id}">
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all">
+                        <div class="px-5 pt-5 pb-4">
+                            <div class="flex items-center gap-2.5 mb-3">
+                                <span class="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold border ${item.type==='found'?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-red-50 text-red-600 border-red-200'}">${item.type.toUpperCase()}</span>
+                                ${item.status==='returned'?'<span class="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold border bg-gray-100 text-gray-500 border-gray-200">RETURNED</span>':''}
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 mb-1.5">${escapeHtml(item.name)}</h3>
+                            <p class="text-sm text-gray-500 leading-relaxed mb-3">${escapeHtml(item.description||'No description')}</p>
+                            <div class="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-400">
+                                <span>${escapeHtml(item.location||'N/A')}</span>
+                                <span>${item.date||'N/A'}</span>
+                                <span>${escapeHtml(item.category||'N/A')}</span>
+                                ${isAdmin?`<span class="text-blue-400">${escapeHtml(item.reportedBy||'anonymous')}</span>`:''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 px-5 pb-4">
+                            ${item.status!=='returned'?`<button onclick="markReturned('${item.id}')" class="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium whitespace-nowrap transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100">Returned</button>`:'<span class="rounded-lg px-3.5 py-2 text-xs font-medium bg-gray-50 text-gray-400 border border-gray-200">Returned</span>'}
+                            ${item.status==='active'?`<button onclick="toggleMatches('${item.id}')" class="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium whitespace-nowrap transition-all bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100">Find Matches</button>`:''}
+                            <button onclick="deleteReport('${item.id}')" class="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium whitespace-nowrap transition-all bg-red-50 text-red-600 border border-red-200 hover:bg-red-100">Delete</button>
+                        </div>
+                    </div>
+                    <div id="matches-${item.id}" class="hidden">
+                        <div class="bg-emerald-50/50 border-t border-emerald-100 px-5 py-4">
+                            <h4 id="matchesTitle-${item.id}" class="text-sm font-bold text-emerald-700 mb-3">Possible Matches</h4>
+                            <div id="matchesList-${item.id}" class="space-y-2.5">
+                                <div class="text-center py-4"><div class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            const pag = document.getElementById('myReportsPagination');
+            if (total > ITEMS_PER_PAGE) {
+                pag.classList.remove('hidden');
+                document.getElementById('myReportsPageInfo').textContent = 'Showing ' + (start+1) + '-' + end + ' of ' + total;
+                document.getElementById('myReportsPrevBtn').disabled = myReportsPage <= 1;
+                document.getElementById('myReportsNextBtn').disabled = myReportsPage >= totalPages;
+            } else { pag.classList.add('hidden'); }
+        }
+
+        function myReportsPrevPage() { if (myReportsPage>1) { myReportsPage--; renderMyReportsPage(); window.scrollTo({top:0,behavior:'smooth'}); } }
+        function myReportsNextPage() { const t=Math.ceil(myReportsData.length/ITEMS_PER_PAGE); if (myReportsPage<t) { myReportsPage++; renderMyReportsPage(); window.scrollTo({top:0,behavior:'smooth'}); } }
+
+        async function toggleMatches(itemId) {
+            const el = document.getElementById('matches-' + itemId);
+            if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
+            el.classList.remove('hidden');
+            const list = document.getElementById('matchesList-' + itemId);
+            try {
+                const res = await fetch(API + '/items/matches/' + itemId);
+                const data = await res.json();
+                if (!data.success) { list.innerHTML = '<p class="text-center text-gray-400 text-sm py-4">Failed.</p>'; return; }
+                document.getElementById('matchesTitle-' + itemId).textContent = 'Possible Matches (' + data.matches.length + ')';
+                if (data.matches.length === 0) { list.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No matches found.</p>'; return; }
+                list.innerHTML = data.matches.map((m, i) => `
+                    <div onclick="openMatchDetail('${m.matchedItemId}')" class="bg-white rounded-lg border ${i===0?'border-emerald-200':'border-gray-200'} p-4 cursor-pointer hover:shadow-md transition-all">
+                        <div class="flex items-start justify-between mb-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold ${m.matchedItemType==='found'?'bg-emerald-50 text-emerald-700 border border-emerald-200':'bg-red-50 text-red-600 border border-red-200'}">${m.matchedItemType?m.matchedItemType.toUpperCase():''}</span>
+                                ${i===0?'<span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 rounded px-1.5 py-0.5">BEST MATCH</span>':''}
+                            </div>
+                            <span class="text-sm font-bold rounded-full px-2.5 py-0.5 ${m.score>=70?'bg-emerald-100 text-emerald-700':m.score>=40?'bg-amber-100 text-amber-700':'bg-gray-100 text-gray-500'}">${m.score}%</span>
+                        </div>
+                        <h5 class="text-sm font-semibold text-gray-900">${escapeHtml(m.matchedItemName)}</h5>
+                        <p class="text-xs text-gray-400 mt-1">${escapeHtml(m.matchedItemLocation)} · ${escapeHtml(m.matchedItemCategory)}</p>
+                    </div>
+                `).join('');
+            } catch (e) { list.innerHTML = '<p class="text-center text-gray-400 text-sm py-4">Connection error.</p>'; }
+        }
+
+        async function markReturned(id) {
+            if (!confirm('Mark this item as returned?')) return;
+            try {
+                const res = await fetch(API + '/items/return/' + id, { method: 'PUT' });
+                const data = await res.json();
+                if (data.success) { showToast('Marked as returned!', 'success'); loadMyReports(); }
+            } catch (e) { showToast('Failed', 'error'); }
+        }
+
+        // ✅ SỬA: thêm email vào body để backend check quyền
+        async function deleteReport(id) {
+            if (!confirm('Delete this item?')) return;
+            try {
+                const res = await fetch(API + '/items/' + id, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentUser ? currentUser.email : '' })
+                });
+                const data = await res.json();
+                if (data.success) { showToast('Deleted!', 'success'); loadMyReports(); }
+                else { showToast(data.message || 'Failed', 'error'); }
+            } catch (e) { showToast('Failed', 'error'); }
+        }
+
+        async function openMatchDetail(id) {
+            try {
+                const res = await fetch(API + '/items');
+                const data = await res.json();
+                if (data.success) allItems = data.items;
+            } catch(e) {}
+            const item = allItems.find(i => i.id === id);
+            if (item) openDetail(id, true);
+            else showToast('Could not load item details', 'error');
+        }
+
+        // === UTILS ===
+        function escapeHtml(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            const c = document.getElementById('toastContent');
+            c.textContent = msg;
+            c.className = 'toast-anim px-5 py-3 rounded-lg shadow-lg text-sm font-medium text-white ' + (type==='success'?'bg-emerald-600':type==='error'?'bg-red-600':'bg-gray-800');
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 3000);
+        }
+
+        document.getElementById('itemDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('searchInput').addEventListener('keypress', (e) => { if (e.key==='Enter') searchItems(); });
+    </script>
+</body>
+</html>
