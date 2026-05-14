@@ -6,9 +6,13 @@ import com.google.firebase.FirebaseOptions;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+/**
+ * Initializes Firebase connection on application startup.
+ * Reads serviceAccountKey.json from resources folder.
+ * @author Nguyen Minh Quyen
+ */
 @Configuration
 public class FirebaseConfig {
 
@@ -16,24 +20,16 @@ public class FirebaseConfig {
     public void initialize() {
         try {
             if (FirebaseApp.getApps().isEmpty()) {
-
-                String json = System.getenv("FIREBASE_CONFIG");
-
-                if (json == null || json.isEmpty()) {
-                    throw new RuntimeException("FIREBASE_CONFIG is missing");
-                }
-
-                InputStream stream =
-                    new ByteArrayInputStream(json.replace("\\n", "\n").getBytes());
+                InputStream serviceAccount =
+                    getClass().getClassLoader()
+                              .getResourceAsStream("serviceAccountKey.json");
 
                 FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(stream))
-                    .setDatabaseUrl("https://vinuni-lostfou-default-rtdb.asia-southeast1.firebasedatabase.app/")
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
 
                 FirebaseApp.initializeApp(options);
-
-                System.out.println("Firebase initialized successfully from ENV");
+                System.out.println("Firebase initialized successfully.");
             }
         } catch (Exception e) {
             System.err.println("Firebase initialization failed: " + e.getMessage());
