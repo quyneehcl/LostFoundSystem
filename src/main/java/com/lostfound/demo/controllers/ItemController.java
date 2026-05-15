@@ -4,8 +4,6 @@ import com.lostfound.demo.models.FoundItem;
 import com.lostfound.demo.models.Item;
 import com.lostfound.demo.models.LostItem;
 import com.lostfound.demo.models.MatchResult;
-import com.lostfound.demo.models.User;
-import com.lostfound.demo.services.AuthService;
 import com.lostfound.demo.services.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,9 +27,6 @@ public class ItemController {
 
     @Autowired
     private ItemService itemService;
-
-    @Autowired
-    private AuthService authService;
 
     // POST /api/items 
     @PostMapping("/items")
@@ -154,7 +149,6 @@ public class ItemController {
             @RequestBody Map<String, String> body) {
         try {
             String email = body.get("email");
-            User user    = authService.getUserByEmail(email);
             Item item    = itemService.getItemById(id);
 
             // Item not found
@@ -166,8 +160,8 @@ public class ItemController {
             }
 
             // Check admission
-            boolean isAdmin    = user != null && "admin".equals(user.getRole());
-            boolean isReporter = user != null && user.getEmail().equals(item.getReportedBy());
+            boolean isAdmin    = "admin@vinuni.edu.vn".equals(email);
+            boolean isReporter = email != null && email.equals(item.getReportedBy());
 
             if (!isAdmin && !isReporter) {
                 Map<String, Object> response = new HashMap<>();
