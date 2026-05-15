@@ -375,6 +375,11 @@
                     onAuthSuccess(cred.user);
                 } else {
                     const cred = await auth.signInWithEmailAndPassword(email, password);
+                    await fetch(API + '/auth', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
                     onAuthSuccess(cred.user);
                 }
             } catch (e) {
