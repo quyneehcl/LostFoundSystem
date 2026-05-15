@@ -4,12 +4,9 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import com.lostfound.demo.models.User;
+import org.springframework.stereotype.Service;
 
-/**
- * Manages user authentication and registration.
- * @author Phan Minh Duc
- */
-
+@Service
 public class AuthService {
     private HashMap<String, User> userMap = new HashMap<>();
 
