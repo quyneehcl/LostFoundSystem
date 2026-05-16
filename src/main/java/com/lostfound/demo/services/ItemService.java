@@ -8,6 +8,8 @@ import com.lostfound.demo.repositories.ItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.springframework.scheduling.annotation.Scheduled;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -78,7 +80,8 @@ public class ItemService {
         return new ArrayList<>();
     }
 
-    // Clean Old Reports
+    // Clean Old Reports — runs every day at midnight
+    @Scheduled(cron = "0 0 0 * * *")
     public String cleanOldReports() {
         List<Item> all     = itemRepository.getAllItems();
         var heap           = cleaner.buildMinHeapByDate(all);
