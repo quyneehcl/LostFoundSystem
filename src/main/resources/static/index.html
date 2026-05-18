@@ -679,9 +679,11 @@
             const name = document.getElementById('itemName').value.trim();
             const category = document.getElementById('itemCategory').value;
             const contactInfo = document.getElementById('itemContact').value.trim();
+            const dateVal = document.getElementById('itemDate').value;
             if (!name) { showToast('Please enter item name', 'error'); return; }
             if (!category) { showToast('Please select a category', 'error'); return; }
             if (!contactInfo) { showToast('Please enter contact info', 'error'); return; }
+            if (dateVal && dateVal > new Date().toISOString().split('T')[0]) { showToast('Date cannot be in the future', 'error'); return; }
             try {
                 const res = await fetch(API + '/items', {
                     method: 'POST',
@@ -899,7 +901,9 @@
             setTimeout(() => t.classList.add('hidden'), 3000);
         }
 
-        document.getElementById('itemDate').value = new Date().toISOString().split('T')[0];
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('itemDate').value = todayStr;
+        document.getElementById('itemDate').max = todayStr;
         document.getElementById('searchInput').addEventListener('keypress', (e) => { if (e.key==='Enter') searchItems(); });
     </script>
 </body>
