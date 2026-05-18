@@ -14,10 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Connects ItemController to ItemRepository and coordinates ItemSearcher, ItemSorter, MatchingService, and ItemCleaner
- * @author Nguyen Minh Quyen
- */
+// Connects ItemController to ItemRepository and coordinates ItemSearcher, ItemSorter, MatchingService, and ItemCleaner
 @Service
 public class ItemService {
 
