@@ -82,52 +82,72 @@ railway.toml                      # Railway deployment config
 ## 4. Build & Run Instructions
 
 ### Option A — Live Demo (No Setup Required)
-
+ 
 The app is already deployed and accessible at:
-
+ 
 **https://lostfoundsystem-production.up.railway.app/**
-
+ 
 No installation needed — open the link in your browser and test all features directly.
-
-### Option B — Command Line
-
+ 
+### Option B — From Submission Zip
+ 
+**Step 1: Extract the submitted zip file**
+ 
+**Step 2: Build the project**
+ 
+On macOS / Linux:
+```bash
+./mvnw clean package -DskipTests
+```
+ 
+On Windows:
+```cmd
+mvnw.cmd clean package -DskipTests
+```
+ 
+**Step 3: Run the application**
+```bash
+java -jar target/demo-0.0.1-SNAPSHOT.jar
+```
+ 
+**Step 4: Open the app**
+ 
+Navigate to [http://localhost:8080](http://localhost:8080) in your browser.
+ 
+---
+ 
+### Option C — Command Line
+ 
+> **Note:** The `serviceAccountKey.json` file is not included in the GitHub repository. Cloning from GitHub will result in no data being loaded. Use the submission zip or the live demo link instead for full functionality.
+ 
 **Step 1: Clone the repository**
 ```bash
 git clone https://github.com/quyneehcl/LostFoundSystem.git
 cd LostFoundSystem
 ```
-
-**Step 2: Add Firebase credentials** (see [Section 5](#5-configuration))
-
+ 
+**Step 2: Add Firebase credentials** (optional, see [Section 5](#5-configuration))
+ 
 **Step 3: Build the project**
-
+ 
 On macOS / Linux:
 ```bash
 ./mvnw clean package -DskipTests
 ```
-
+ 
 On Windows:
 ```cmd
 mvnw.cmd clean package -DskipTests
 ```
-
+ 
 **Step 4: Run the application**
 ```bash
 java -jar target/demo-0.0.1-SNAPSHOT.jar
 ```
-
+ 
 **Step 5: Open the app**
-
+ 
 Navigate to [http://localhost:8080](http://localhost:8080) in your browser.
-
----
-
-### Option C — IDE (IntelliJ IDEA / VS Code)
-
-1. Open the project root folder in your IDE.
-2. Ensure **JDK 17** is configured as the project SDK.
-4. Run `DemoApplication.java` (the class with `@SpringBootApplication`).
-5. Navigate to [http://localhost:8080](http://localhost:8080).
 
 ---
 
