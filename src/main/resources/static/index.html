@@ -101,6 +101,7 @@
             flex-direction: column;
             overflow: hidden;
             padding: 12px 16px 0;
+            min-height: 0;
         }
         .report-card-title {
             font-size: 0.9rem;
@@ -127,6 +128,7 @@
             color: #9ca3af;
             display: flex;
             flex-wrap: wrap;
+            flex-shrink: 0;
             gap: 3px 10px;
             margin-top: auto;
             padding-bottom: 8px;
@@ -952,10 +954,10 @@
                             <div class="report-card-title">${escapeHtml(item.name)}</div>
                             <div class="report-card-desc">${escapeHtml(item.description || 'No description')}</div>
                             <div class="report-card-meta">
+                                ${isAdmin ? `<span style="color:#60a5fa;font-weight:600;">${escapeHtml(item.reportedBy || 'anonymous')}</span>` : ''}
                                 <span>${escapeHtml(item.location || 'N/A')}</span>
                                 <span>${item.date || 'N/A'}</span>
                                 <span>${escapeHtml(item.category || 'N/A')}</span>
-                                ${isAdmin ? `<span style="color:#60a5fa;">${escapeHtml(item.reportedBy || 'anonymous')}</span>` : ''}
                             </div>
                         </div>
                         <!-- Actions -->
